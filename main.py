@@ -56,14 +56,14 @@ img_qblur = cv2.filter2D(img_gray, -1, kernel_q)
 # Sobel Edge Detection
 print('Sobel')
 start = time.time()
-sobel = cv2.Sobel(src=img_blur, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=3)
+sobel = cv2.Sobel(src=img_blur, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=11)
 sobel = np.abs(sobel)   # convert to magnitude
 print(f'Time spent: {(time.time() - start):.6f} seconds\n')
 
 # Canny Edge Detection
 print('Canny')
 start = time.time()
-canny = cv2.Canny(image=img_blur, threshold1=150, threshold2=300)
+canny = cv2.Canny(image=img_blur, threshold1=80, threshold2=120)
 print(f'Time spent: {(time.time() - start):.6f} seconds\n')
 
 print('LoG')
@@ -87,7 +87,7 @@ blur2 = cv2.GaussianBlur(img_gray, (0, 0), sigmaX=sigma2)
 dog = blur1.astype('float32') - blur2.astype('float32')
 
 edge_kernel = np.array([[0,  1, 0],
-                        [1, -4, 1],
+                        [1, -10, 1],
                         [0,  1, 0]], dtype=np.float32)
 dog_edges = cv2.filter2D(dog, -1, edge_kernel)
 dog_edges = np.abs(dog_edges)   # keep only magnitude
@@ -95,9 +95,8 @@ dog_norm = cv2.normalize(dog_edges, None, 0, 255, cv2.NORM_MINMAX).astype(np.uin
 
 print(f'Time spent: {(time.time() - start):.6f} seconds\n')
 
-
-k1 = q_gaussian_kernel(ksize=3, sigma=sigma1, q=1.5)
-k2 = q_gaussian_kernel(ksize=11, sigma=sigma2, q=1.5)
+k1 = q_gaussian_kernel(ksize=3, sigma=sigma1, q=4)
+k2 = q_gaussian_kernel(ksize=21, sigma=sigma2, q=4)
 
 print('q-DoG')
 start = time.time()
