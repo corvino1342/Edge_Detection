@@ -2,38 +2,10 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import os
 
-def q_gaussian_kernel(ksize = 5, sigma = 1.0, q = 1.0):
-    """
-    Generate a 2D q-Gaussian kernel.
-
-    Args:
-        ksize (int): kernel size (odd number, e.g. 3, 5, 7).
-        sigma (float): scale parameter (the sigma for Gaussian).
-        q (float): entropic index (q=1 → normal Gaussian).
-
-    Returns:
-        kernel (numpy.ndarray): normalized q-Gaussian kernel.
-    """
-    assert ksize % 2 == 1
-    half = ksize // 2
-
-    x = np.arange(-half, half + 1)
-    y = np.arange(-half, half + 1)
-
-    X, Y = np.meshgrid(x, y)
-    R2 = X**2 + Y**2
-
-    beta = (1 / (2 * sigma ** 2)) # this is the scale parameter, basaed on the value of Gaussian sigma
-
-    if q == 0:
-        kernel = np.exp(-beta * R2)
-    else:
-        kernel = (1 - (1 - q) * beta * R2) ** (1 / (1 - q))
-        kernel[kernel < 0] = 0
-
-    kernel /= kernel.sum()
-    return kernel.astype(np.float32)
+os.makedirs('images', exist_ok=True)
+os.makedirs('edges', exist_ok=True)
 
 
 
@@ -47,16 +19,34 @@ cv2.imshow("Original", img)
 img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 #  blurring the image
-img_blur = cv2.GaussianBlur(img_gray, (3, 3), sigmaX=0, sigmaY=0)
+img_blur = cv2.GaussianBlur(img_gray, (3, 3), sigmaX=0)
+
+
+blurred_images = []
+for sigma in sigmas:
+    kernel = gaussian_kernel(ksize=ksize, sigma=sigma)
+    blurred = cv2.filter2D(img_gray, -1, kernel)
+    blurred_images.append(blurred)
+
+plt.figure(figsize=(12, 8))
+for i, blurred in enumerate(blurred_images):
+    plt.subplot(2, 2, i + 1)
+    plt.imshow(blurred, cmap='gray')
+    plt.title(f'Blurred with σ = {sigmas[i]}')
+    plt.axis('off')
+plt.tight_layout()
+plt.show()
+
+
 
 # blurring the image using q-gaussian kernel
-kernel_q = q_gaussian_kernel(ksize=7, sigma=0.5, q=1.2)
+kernel_q = q_gaussian_kernel(ksize=7, q=1.2)
 img_qblur = cv2.filter2D(img_gray, -1, kernel_q)
 
 # Sobel Edge Detection
 print('Sobel')
 start = time.time()
-sobel = cv2.Sobel(src=img_blur, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=11)
+sobel = cv2.Sobel(src=img_blur, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=5)
 sobel = np.abs(sobel)   # convert to magnitude
 print(f'Time spent: {(time.time() - start):.6f} seconds\n')
 
@@ -82,8 +72,8 @@ sigma2 = 2
 
 print('DoG')
 start = time.time()
-blur1 = cv2.GaussianBlur(img_gray, (0, 0), sigmaX=sigma1)
-blur2 = cv2.GaussianBlur(img_gray, (0, 0), sigmaX=sigma2)
+blur1 = cv2.GaussianBlur(img_gray, (3, 3), sigmaX=sigma1)
+blur2 = cv2.GaussianBlur(img_gray, (3, 3), sigmaX=sigma2)
 dog = blur1.astype('float32') - blur2.astype('float32')
 
 edge_kernel = np.array([[0,  1, 0],
@@ -95,8 +85,8 @@ dog_norm = cv2.normalize(dog_edges, None, 0, 255, cv2.NORM_MINMAX).astype(np.uin
 
 print(f'Time spent: {(time.time() - start):.6f} seconds\n')
 
-k1 = q_gaussian_kernel(ksize=3, sigma=sigma1, q=4)
-k2 = q_gaussian_kernel(ksize=21, sigma=sigma2, q=4)
+k1 = q_gaussian_kernel(ksize=3, q=1.2)
+k2 = q_gaussian_kernel(ksize=5, q=1.2)
 
 print('q-DoG')
 start = time.time()
