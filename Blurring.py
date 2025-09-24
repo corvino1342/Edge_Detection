@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import cv2
 
 def gaussian_kernel(ksize=3, sigma=1.0):
     """Generate a 2D Gaussian kernel."""
@@ -42,14 +43,14 @@ def q_gaussian_kernel(ksize = 5, sigma = 1.0, q = 1.0):
 
 
 
-sigmas = np.linspace(0.1, 5, 16)
+sigmas = np.linspace(0.1, 5, 4)
 ksize = 15
 
 plt.figure(figsize=(12, 8))
 for i, sigma in enumerate(sigmas):
 
-    #kernel = gaussian_kernel(ksize, sigma)
-    kernel = q_gaussian_kernel(ksize, sigma, q=0.9)
+    kernel = gaussian_kernel(ksize, sigma)
+    #kernel = q_gaussian_kernel(ksize, sigma, q=0.9)
 
 
     plt.subplot(math.ceil(len(sigmas)/int(math.sqrt(len(sigmas)))), math.ceil(len(sigmas)/int(math.sqrt(len(sigmas)))), i + 1)
@@ -62,4 +63,27 @@ plt.tight_layout()
 plt.show()
 
 
+# importing the image
+img = cv2.imread("mouse_picture.png")
+
+# printing the image
+cv2.imshow("Original", img)
+
+# change the color to a gray scale
+img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+blurred_images = []
+for sigma in sigmas:
+    kernel = gaussian_kernel(ksize=ksize, sigma=sigma)
+    blurred = cv2.filter2D(img_gray, -1, kernel)
+    blurred_images.append(blurred)
+
+plt.figure(figsize=(12, 8))
+for i, blurred in enumerate(blurred_images):
+    plt.subplot(math.ceil(len(sigmas)/int(math.sqrt(len(sigmas)))), math.ceil(len(sigmas)/int(math.sqrt(len(sigmas)))), i + 1)
+    plt.imshow(blurred, cmap='gray')
+    plt.title(f'Blurred with σ = {sigmas[i]:.3f}')
+    plt.axis('off')
+plt.tight_layout()
+plt.show()
 
