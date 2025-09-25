@@ -37,7 +37,7 @@ def q_gaussian_kernel(ksize = 5, sigma = 1.0, q = 1.0):
         kernel = np.exp(-beta * R2)
     else:
         kernel = (1 - (1 - q) * beta * R2) ** (1 / (1 - q))
-        kernel[kernel < 0] = 0
+        kernel = np.maximum(1 - (1 - q) * beta * R2, 0) ** (1 / (1 - q))
     kernel /= kernel.sum()
     return kernel.astype(np.float32)
 
@@ -49,9 +49,8 @@ ksize = 15
 plt.figure(figsize=(12, 8))
 for i, sigma in enumerate(sigmas):
 
-    kernel = gaussian_kernel(ksize, sigma)
-    #kernel = q_gaussian_kernel(ksize, sigma, q=0.9)
-
+    #kernel = gaussian_kernel(ksize, sigma)
+    kernel = q_gaussian_kernel(ksize, sigma, q=0.001)
 
     plt.subplot(math.ceil(len(sigmas)/int(math.sqrt(len(sigmas)))), math.ceil(len(sigmas)/int(math.sqrt(len(sigmas)))), i + 1)
 
